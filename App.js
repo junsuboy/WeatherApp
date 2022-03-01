@@ -1,18 +1,48 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, ScrollView, Text, StyleSheet, Dimensions } from "react-native";
+import * as Location from "expo-location";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+const API_KEY = "ba273bc91e0c46892b99581ed25a4dcf";
+
 export default function App() {
+  const [city, setCity] = useState("Loading...");
+  const [days, setDays] = useState([]);
+  const [location, setLocation] = useState();
+  const [ok, setOk] = useState(true);
+  const getWeather = async () => {
+    const { granted } = await Location.requestForegroundPermissionsAsync();
+    if (!granted) {
+      sekOk(false);
+    }
+    const {
+      coords: { latitude, longitude },
+    } = await Location.getCurrentPositionAsync({ accuracy: 5 });
+    const location = await Location.reverseGeocodeAsync(
+      { latitude, longitude },
+      { useGoogleMaps: false }
+    );
+    setCity(location[0].city);
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=7&appid=${API_KEY}`
+    );
+    const json = await response.json();
+    console.log(json);
+  };
+  useEffect(() => {
+    getWeather();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.city}>
-        <Text style={styles.cityName}>Seoul</Text>
+        <Text style={styles.cityName}>{city}</Text>
       </View>
       <ScrollView
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
+        indicatorStyle="white"
         contentContainerStyle={styles.weather}
       >
         <View style={styles.day}>
